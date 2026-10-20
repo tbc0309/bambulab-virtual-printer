@@ -1,0 +1,532 @@
+<!doctype html>
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <title>BambuLab Virtual Printer</title>
+    <link href="style.css" rel="stylesheet" />
+    <script src="app.js" type="module"></script>
+    <script src="services.js" type="module"></script>
+    <script src="logs.js" type="module"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>BambuLab <span>Virtual Printer</span></strong>
+        <p>本地 MQTT、AMS 与摄像头联调</p>
+      </div>
+      <a href="audit.html">机型 / AMS 能力</a>
+      <div
+        aria-atomic="true"
+        class="status-box tone-info"
+        id="health"
+        role="status"
+      >
+        连接中…
+      </div>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">PRINTER · AMS · MQTT · CAMERA</div>
+          <h1>搭建你的虚拟打印机组合</h1>
+          <p>
+            控制屏直连 TLS
+            MQTT。虚拟状态、控制回复、故障注入和收发分析独立记录。
+          </p>
+          <p class="muted">
+            仅模拟；不会连接或控制真实打印机。免密码管理，请只在可信局域网开放。
+          </p>
+        </div>
+      </section>
+      <nav aria-label="管理功能" class="section-nav">
+        <a href="#servicesPanel">服务状态</a
+        ><a href="#printersPanel">打印机组合</a
+        ><a href="#cameraPanel">摄像头测试</a><a href="#logsPanel">日志诊断</a>
+      </nav>
+      <section aria-labelledby="servicesTitle" class="panel" id="servicesPanel">
+        <div class="heading">
+          <h2 id="servicesTitle">服务与运行环境</h2>
+          <span class="status-box tone-info" id="serviceStatus" role="status"
+            >检查中…</span
+          >
+        </div>
+        <p class="status-box tone-error" id="runtimeWarnings" role="status"></p>
+        <details class="subcard">
+          <summary>运行环境</summary>
+          <p class="muted" id="environment"></p>
+        </details>
+        <div class="service-grid" id="serviceControls"></div>
+        <details class="subcard">
+          <summary>最近服务事件</summary>
+          <pre aria-live="off" id="serviceLogs" tabindex="0"></pre>
+        </details>
+      </section>
+      <div
+        class="status-box tone-info"
+        id="message"
+        role="status"
+        tabindex="-1"
+      ></div>
+      <section class="panel" hidden="" id="builder">
+        <div class="heading">
+          <h2>组合编辑</h2>
+          <button id="closeBuilder">关闭</button>
+        </div>
+        <div class="grid">
+          <label>协议机型<select id="model"></select></label
+          ><label
+            >名称（英文 / 数字）<input
+              id="name"
+              maxlength="63"
+              value="Virtual printer" /></label
+          ><label
+            >虚拟序列号<input
+              id="serial"
+              maxlength="29"
+              pattern="XTSIM[A-Za-z0-9_-]+"
+              value="XTSIM001" /></label
+          ><label
+            >外置耗材<select id="external">
+              <option value="0">无</option>
+              <option value="1">1 路</option>
+              <option value="2">2 路（双喷嘴）</option>
+            </select></label
+          >
+        </div>
+        <div class="heading">
+          <h3>AMS 单元</h3>
+          <div class="inline-controls">
+            <select aria-label="AMS 类型" id="unitKind">
+              <option value="ams">AMS 一代</option>
+              <option value="lite">AMS lite</option>
+              <option value="pro">AMS 2 Pro</option>
+              <option value="ht">AMS HT</option>
+              <option value="mixed">Lite Mixed · 边界测试</option></select
+            ><button id="addUnit">添加</button>
+          </div>
+        </div>
+        <div id="unitDraft"></div>
+        <p class="muted">
+          支持协议地址：四槽单元 0–3、HT 128–135、Lite Mixed
+          16。非标准组合会标注，不冒充硬件兼容。
+        </p>
+        <button class="primary" id="saveCombination">保存组合</button>
+      </section>
+      <section class="panel" id="printersPanel">
+        <div class="heading">
+          <h2>打印机组合</h2>
+          <button id="create">＋ 新建组合</button>
+        </div>
+        <div class="toolbar">
+          <button id="presets">生成全部机型样例</button
+          ><button id="maximum">生成最大 AMS 压力组合</button>
+        </div>
+        <section class="combinations" id="combinations"></section>
+      </section>
+      <section class="section-stack" hidden="" id="workspace">
+        <div class="heading">
+          <h2 data-i18n-skip="" id="selectedTitle"></h2>
+          <span id="clientActivity" class="muted" role="status"></span>
+          <div>
+            <button id="edit">编辑组合</button
+            ><button id="reset">重置状态</button
+            ><button class="danger" id="delete">删除组合</button>
+          </div>
+        </div>
+        <div class="workspace">
+          <section class="panel">
+            <h3>打印机控制</h3>
+            <section class="subcard">
+              <h3>状态显示与注入</h3>
+              <div class="status-box tone-info" id="live"></div>
+              <div class="chips" id="capabilities"></div>
+              <p class="muted">状态注入</p>
+              <div class="buttons state-actions" id="stateActions"></div>
+            </section>
+            <section class="subcard">
+              <h3>打印控制与灯光</h3>
+              <div class="buttons" id="actions"></div>
+            </section>
+            <section class="subcard">
+              <h3>温度与喷嘴</h3>
+              <div class="grid compact">
+                <label>喷嘴<select id="nozzle"></select></label
+                ><label
+                  >目标温度 °C<input
+                    id="targetTemp"
+                    max="350"
+                    min="0"
+                    required=""
+                    type="number"
+                    value="215"
+                /></label>
+              </div>
+              <div class="buttons">
+                <button id="setNozzle">设置喷嘴温度</button
+                ><button id="switchNozzle">切换喷嘴</button
+                ><button id="heatBed">热床 60°C</button
+                ><button id="heatChamber">腔体温度 55°C</button>
+              </div>
+            </section>
+            <section class="subcard">
+              <h3>风扇控制</h3>
+              <div class="grid compact">
+                <label
+                  >风扇<select id="fan">
+                    <option value="1">模型风扇</option>
+                    <option value="2">辅助风扇</option>
+                    <option value="3">排风风扇</option>
+                  </select></label
+                ><label
+                  >风量 0–255<input
+                    id="fanSpeed"
+                    max="255"
+                    min="0"
+                    required=""
+                    type="number"
+                    value="128"
+                /></label>
+              </div>
+              <div class="buttons">
+                <button id="setFan">设置风量</button>
+              </div>
+            </section>
+            <section class="subcard">
+              <h3 id="motionActivity">运动测试</h3>
+              <p class="muted">仅修改虚拟位置，不会驱动真实打印机。</p>
+              <div class="buttons">
+                <button id="homeAxes">轴回零</button
+                ><button id="extrude">挤出 10 mm</button
+                ><button id="retract">回抽 10 mm</button>
+              </div>
+            </section>
+            <section class="subcard">
+              <h3>耗材选择与操作</h3>
+              <div id="ams"></div>
+              <div class="grid compact">
+                <label>操作单元<select id="source"></select></label
+                ><label>槽位<select id="slot"></select></label>
+              </div>
+              <p
+                class="status-box tone-info"
+                id="filamentTarget"
+                role="status"
+              ></p>
+              <div class="buttons">
+                <button id="reread">重读 RFID</button
+                ><button id="load">进料</button
+                ><button id="unload">退料</button>
+              </div>
+              <details class="editor-details">
+                <summary id="filamentEditorTitle">编辑耗材属性</summary>
+                <div class="form-stack">
+                  <p class="muted">
+                    先选择耗材单元和槽位；编辑器会载入该槽当前值，点击“应用耗材属性”后生效。
+                  </p>
+                  <div class="grid compact">
+                    <label
+                      >耗材颜色<input
+                        id="filamentColor"
+                        type="color"
+                        value="#ed544b" /></label
+                    ><label
+                      >剩余 %<input
+                        id="filamentRemain"
+                        max="100"
+                        min="0"
+                        required=""
+                        type="number"
+                        value="72" /></label
+                    ><label
+                      >材料<input id="filamentType" maxlength="20" value="PLA"
+                    /></label>
+                  </div>
+                  <button id="updateFilament">应用耗材属性</button>
+                </div>
+              </details>
+            </section>
+            <section class="subcard">
+              <h3>AMS 烘干</h3>
+              <div class="grid compact">
+                <label
+                  >烘干 °C<input
+                    id="dryTemp"
+                    max="85"
+                    min="45"
+                    required=""
+                    type="number"
+                    value="55" /></label
+                ><label
+                  >时长 h<input
+                    id="dryHours"
+                    max="24"
+                    min="1"
+                    required=""
+                    type="number"
+                    value="4"
+                /></label>
+              </div>
+              <div class="buttons">
+                <button id="dryStart">开始烘干</button
+                ><button id="dryStop">停止烘干</button>
+              </div>
+            </section>
+            <section class="subcard">
+              <h3>热端仓</h3>
+              <div class="buttons"><button id="rack">重读全部热端</button></div>
+            </section>
+          </section>
+          <section class="panel">
+            <h3>通信与调试</h3>
+            <section class="subcard">
+              <h3>MQTT 统计与分析</h3>
+              <div class="metrics" id="mqttStats"></div>
+              <div class="status-stack" id="analysis"></div>
+              <p class="muted">
+                RX：虚拟机收到的命令，日志标明 MQTT / WEB
+                来源；CHECK：参数检查和回复；TX：发给订阅者的报文数。
+              </p>
+              <div class="buttons">
+                <button id="publish">发送完整状态</button
+                ><button id="export">下载状态快照</button>
+              </div>
+            </section>
+            <section class="subcard tone-warning">
+              <h3>故障注入</h3>
+              <div class="grid compact">
+                <label
+                  >回复错误码<input
+                    id="errorCode"
+                    max="4294967295"
+                    min="0"
+                    required=""
+                    type="number"
+                    value="0" /></label
+                ><label
+                  >回复延迟 s<input
+                    id="delay"
+                    max="20"
+                    min="0"
+                    required=""
+                    type="number"
+                    value="0" /></label
+                ><label class="check"
+                  ><input id="noack" type="checkbox" />不回命令 ACK</label
+                ><label class="check"
+                  ><input id="drop" type="checkbox" />停止推送</label
+                >
+              </div>
+              <label class="check"
+                ><input id="noVersion" type="checkbox" />隐藏机型版本（测试默认
+                Logo）</label
+              ><button class="primary" id="fault">应用异常</button>
+            </section>
+            <section class="subcard tone-info" id="packetCard">
+              <div class="heading"><h3>高级报文注入</h3></div>
+              <details class="disclosure-options">
+                <summary>报文编辑器</summary>
+                <div class="form-stack">
+                  <p class="muted">
+                    仅发送到 XTSIM
+                    虚拟主题。状态补丁会保留；单次增量用于缺失字段 /
+                    畸形数据测试。
+                  </p>
+                  <div class="inline-controls">
+                    <select aria-label="报文模板" id="templates">
+                      <option value="faults">打印错误 + HMS</option>
+                      <option value="clear">清除错误</option>
+                      <option value="sentinel">P1S 腔体温度占位值 5</option>
+                      <option value="invalid">无效温度</option>
+                      <option value="external">外置耗材缺失</option>
+                      <option value="busy">双喷嘴忙碌</option></select
+                    ><button id="template">载入模板</button>
+                  </div>
+                  <textarea
+                    aria-label="JSON 调试报文"
+                    id="payload"
+                    rows="9"
+                    spellcheck="false"
+                  >
+{"print":{"mc_percent":42,"gcode_state":"RUNNING"}}</textarea>
+                  <div class="buttons">
+                    <button id="patch">合并状态补丁</button
+                    ><button id="autoReport">暂停自动上报</button
+                    ><button id="delta">发送单次增量</button
+                    ><button id="sendCommand">虚拟控制命令</button>
+                  </div>
+                </div>
+              </details>
+            </section>
+            <section class="subcard">
+              <div class="heading">
+                <h3>收发记录</h3>
+                <label class="check"
+                  ><input id="pauseLog" type="checkbox" />暂停刷新日志</label
+                >
+              </div>
+              <div class="events" id="events"></div>
+            </section>
+          </section>
+        </div>
+      </section>
+      <section aria-labelledby="cameraTitle" class="panel" id="cameraPanel">
+        <div class="heading">
+          <h2 id="cameraTitle">摄像头传输测试</h2>
+          <span class="status-box tone-info" id="cameraStatus" role="status"
+            >加载中…</span
+          >
+        </div>
+        <p class="muted">
+          合成彩图；在上方直接开启 RTSPS 或 JPEG 服务，默认关闭。测试凭据 bblp /
+          12345678。修改场景后客户端会重连。
+        </p>
+        <div class="card-grid three">
+          <section class="subcard">
+            <h3>场景与时序</h3>
+            <div class="grid compact">
+              <label
+                >场景<select id="cameraMode">
+                  <option value="normal">正常视频</option>
+                  <option value="fixed-timestamps">固定 RTP 时间戳</option>
+                  <option value="delayed">延迟首帧</option>
+                  <option value="drop">主动断流</option>
+                  <option value="stall">连接但不发送画面</option>
+                  <option value="wrong-code">认证失败</option>
+                  <option value="oversize">JPEG 帧超限</option>
+                  <option value="truncated-header">JPEG 帧头中断</option>
+                  <option value="truncated-frame">JPEG 帧数据中断</option>
+                </select></label
+              ><label
+                >帧率<input
+                  id="cameraFps"
+                  max="30"
+                  min="1"
+                  required=""
+                  type="number"
+                  value="3" /></label
+              ><label
+                >首帧延迟（秒）<input
+                  id="cameraDelay"
+                  max="30"
+                  min="0"
+                  required=""
+                  type="number"
+                  value="2" /></label
+              ><label
+                >断流前帧数<input
+                  id="cameraDrop"
+                  max="300"
+                  min="1"
+                  required=""
+                  type="number"
+                  value="10"
+              /></label>
+            </div>
+          </section>
+          <section class="subcard">
+            <h3>RTSPS / H.264</h3>
+            <div class="grid compact">
+              <label
+                >RTSPS 认证<select id="cameraAuth">
+                  <option value="digest">Digest</option>
+                  <option value="basic">Basic</option>
+                </select></label
+              ><label
+                >TCP 分片字节（0 为默认）<input
+                  id="cameraFragment"
+                  max="4096"
+                  min="0"
+                  required=""
+                  type="number"
+                  value="0" /></label
+              ><label
+                >H.264 来源<select id="cameraH264">
+                  <option value="fixture">fixture</option>
+                </select></label
+              ><label class="check"
+                ><input id="cameraStap" type="checkbox" />SPS/PPS STAP-A
+                聚合</label
+              >
+            </div>
+          </section>
+          <section class="subcard">
+            <h3>JPEG 素材</h3>
+            <div class="grid single">
+              <label
+                >JPEG 来源<select id="cameraJpeg">
+                  <option value="fixture">fixture</option>
+                </select></label
+              >
+            </div>
+            <p class="muted">
+              帧超限、帧头中断与帧数据中断仅作用于 JPEG。素材与 RTSPS
+              分别选择，共用场景和帧率。
+            </p>
+          </section>
+        </div>
+        <p class="muted" id="cameraHint" role="status"></p>
+        <div class="buttons">
+          <button class="primary" id="cameraApply">应用摄像头配置</button>
+        </div>
+        <p class="metrics" id="cameraCounters"></p>
+        <details>
+          <summary>最近摄像头事件</summary>
+          <pre aria-live="off" id="cameraLogs" tabindex="0"></pre>
+        </details>
+      </section>
+      <section aria-labelledby="logsTitle" class="panel" id="logsPanel">
+        <div class="heading">
+          <h2 id="logsTitle">日志文件</h2>
+          <button id="logsRefresh">刷新列表</button>
+        </div>
+        <p class="status-box tone-info" id="logsStatus" role="status"></p>
+        <p class="muted">
+          页面保留状态、异常和最近命令；完整诊断统一保存在数据目录的
+          logs/。文件用途见列表，视频画面及认证凭据不写入日志。
+        </p>
+        <div class="filter-row">
+          <label
+            >日志类型<select id="logsChannel">
+              <option value="">全部类型</option>
+              <option value="runtime">运行与服务</option>
+              <option value="mqtt">打印机通信</option>
+              <option value="camera">摄像头传输</option>
+              <option value="http">管理页请求</option>
+              <option value="comparison">只读对照</option>
+            </select></label
+          ><label class="check"
+            ><input
+              checked=""
+              id="logsCurrent"
+              type="checkbox"
+            />仅本次运行</label
+          >
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">功能与文件说明</th>
+                <th scope="col">更新时间</th>
+                <th scope="col">大小</th>
+                <th scope="col">操作</th>
+              </tr>
+            </thead>
+            <tbody id="logFiles"></tbody>
+          </table>
+        </div>
+        <details class="subcard" id="logPreview">
+          <summary id="logPreviewTitle">查看文件后显示最近 100 条记录</summary>
+          <pre id="logContent" tabindex="0"></pre>
+        </details>
+      </section>
+      <footer>
+        连接：电脑局域网 IP · TLS MQTT <span id="port">8883</span>；LAN 用户
+        bblp / 12345678；测试账号 xtouch-lab / xtouch-lab。<br />机型能力基准与测试边界见
+        README.md。模拟成功不等同实机动作成功。
+      </footer>
+    </main>
+  </body>
+</html>
