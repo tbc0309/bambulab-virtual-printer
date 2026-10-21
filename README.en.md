@@ -131,6 +131,8 @@ Nonstandard combinations show warnings and do not imply physical compatibility. 
 
 After a control-screen action, inspect its MQTT connection count, RX and CHECK events. RX records requests and distinguishes MQTT from WEB; CHECK records validation and replies. TX counts reports queued for subscribers, not confirmed client processing. Each combination retains 200 events; the page shows the latest 40. Full records go to the shared log directory; current state can be downloaded separately as a snapshot.
 
+To verify a LAN connection, authenticate with `bblp` and the access code, then subscribe to `device/…/report` for the matching serial. A successful subscription immediately returns status without control commands. Incorrect access codes reject the connection; unknown serials reject the subscription.
+
 
 Incoming control-screen requests highlight the matching buttons and fields for eight seconds without overwriting an active edit. Camera connection changes also highlight their status. Reduced-motion preferences use a static outline instead of pulsing.
 

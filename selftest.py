@@ -458,6 +458,28 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(r, (0x20, b"\x00\x05"))
         c.close()
 
+    def test_read_only_lan_verification(self):
+        """LAN verification needs authentication and a matching report, no commands."""
+        c, result = self.connect(user="bblp", password="wrong")
+        self.assertEqual(result, (0x20, b"\x00\x05"))
+        c.close()
+        c, result = self.connect(user="bblp", password="12345678")
+        try:
+            self.assertEqual(result, (0x20, b"\0\0"))
+            with patch.object(printer_model.Printer, "command", autospec=True) as command:
+                c.sendall(mqtt.packet(0x82, b"\x00\x01" + mqtt.mqtt_string("device/XTSIMP1S/report") + b"\x00"))
+                self.assertEqual(mqtt.receive(c), (0x90, b"\x00\x01\x00"))
+                typ, body = mqtt.receive(c)
+                topic, offset = mqtt.read_string(body, 0)
+                self.assertEqual(typ & 0xF0, 0x30)
+                self.assertEqual(topic, "device/XTSIMP1S/report")
+                self.assertIn("print", json.loads(body[offset:]))
+                command.assert_not_called()
+                c.sendall(mqtt.packet(0x82, b"\x00\x02" + mqtt.mqtt_string("device/XTSIMUNKNOWN/report") + b"\x00"))
+                self.assertEqual(mqtt.receive(c), (0x90, b"\x00\x02\x80"))
+        finally:
+            c.close()
+
     def test_second_broker_cannot_bind_same_port(self):
         with self.assertRaises(OSError):
             mqtt.mqtt_server(self.lab, "127.0.0.1", self.port)
