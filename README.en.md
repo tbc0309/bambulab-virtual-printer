@@ -55,6 +55,8 @@ In xTouch-CN web management, add a LAN device using the computer's LAN IP, acces
 
 ## Camera and video tests
 
+Camera streams and print thumbnails are separate features. This simulator does not provide Bambu Cloud task history or the official thumbnail CDN; cloud task thumbnails require an actual print job. Local video tests do not depend on cloud task images. xTouch-CN can link a local camera connection automatically by serial number; conflicting local candidates require an explicit selection.
+
 ![Service management](docs/images/services.en.png)
 
 ![Camera scenarios](docs/images/camera.en.png)
@@ -223,3 +225,7 @@ The simulator never forwards commands to real printers. FTP, real cloud authenti
 Run the regression suite with `python -m unittest -v selftest camera_test diagnostics_test`. The dashboard uses native JavaScript and requires no frontend build. `model.py` implements printer state and commands; MQTT, cameras, service management and diagnostics have separate modules. `catalog.json` records capability snapshots and upstream sources.
 
 Source is distributed under GPLv3. See [License and attribution](LICENSE.md) for image, capability-data and dependency notices.
+
+Thumbnail fixtures: `thumbnail_fixture.py` generates explicit plate, stored/deflated PNG, ZIP data descriptor and late-cover cases. Run `python -m unittest -v thumbnail_test`. These synthetic files do not add FTPS service support or establish physical validation across models. For control-screen FTPS regression, use the separate read-only `boards/tests/thumbnail_server.py` service in xTouch-CN.
+
+Use `fixtures/thumbnail-subtask-only.json` as a state-injection payload to check numeric IDs, subtask-only delta updates and missing filenames. This fixture does not emulate the real cloud task API or image CDN; cloud cover downloads require separate validation.

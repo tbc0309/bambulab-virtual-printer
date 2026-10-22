@@ -55,6 +55,8 @@ python bootstrap.py --bind 0.0.0.0 --http-port 8894 --mqtt-port 8883 --data-dir 
 
 ## 摄像头与视频测试
 
+摄像头码流与打印缩略图是独立功能。本模拟器不提供拓竹云任务历史或官方缩略图 CDN，云端任务缩略图需通过真实打印任务获取。本地视频测试不依赖云端任务图片。xTouch-CN 可按同一序列号自动关联本地摄像头连接；多个候选冲突时需明确选择。
+
 ![服务管理](docs/images/services.png)
 
 ![摄像头场景](docs/images/camera.png)
@@ -223,3 +225,7 @@ python compare_p1s.py --config /private/xtouch-backup.json --output /private/p1s
 运行回归测试：`python -m unittest -v selftest camera_test diagnostics_test`。网页使用原生 JavaScript，无需前端构建。打印机状态与命令位于 `model.py`，MQTT、摄像头、服务管理及诊断分别位于同名模块；能力快照与上游来源记录在 `catalog.json`。
 
 本项目采用 GPLv3。打印机图片与能力数据的来源、授权及依赖说明见 [许可证与素材归属](LICENSE.md)。
+
+缩略图回归夹具：`thumbnail_fixture.py` 生成指定盘号、存储/压缩 PNG、ZIP 数据描述符及超出 1 MiB 前缀的图片场景；运行 `python -m unittest -v thumbnail_test`。这些合成文件不代表服务已实现 FTPS 或全部机型已实机验证。控制屏 FTPS 回归可使用 xTouch-CN 的 `boards/tests/thumbnail_server.py` 独立只读测试服务。
+
+`fixtures/thumbnail-subtask-only.json` 可作为状态注入的 JSON 内容，验证数值任务 ID、仅有子任务 ID 的增量包，以及缺少文件名的解析。该样本不模拟真实云端任务 API 或图片 CDN；云端封面下载仍须独立验证。
