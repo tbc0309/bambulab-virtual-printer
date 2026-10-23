@@ -1,0 +1,114 @@
+[
+  {
+    "serial": "XTSIMP4GRID01",
+    "name": "SIM 01 P1S",
+    "model": "C12",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID02",
+    "name": "SIM 02 A1",
+    "model": "N2S",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID03",
+    "name": "SIM 03 X1 Carbon",
+    "model": "BL-P001",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID04",
+    "name": "SIM 04 H2D",
+    "model": "O1D",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID05",
+    "name": "SIM 05 P2S",
+    "model": "N7",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID06",
+    "name": "SIM 06 A1 mini",
+    "model": "N1",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID07",
+    "name": "SIM 07 P1P",
+    "model": "C11",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID08",
+    "name": "SIM 08 X1",
+    "model": "BL-P002",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID09",
+    "name": "SIM 09 X1E",
+    "model": "C13",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID10",
+    "name": "SIM 10 H2C",
+    "model": "O1C",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID11",
+    "name": "SIM 11 H2D Pro",
+    "model": "O1E",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID12",
+    "name": "SIM 12 H2S",
+    "model": "O1S",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID13",
+    "name": "SIM 13 X2D",
+    "model": "N6",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID14",
+    "name": "SIM 14 A2L",
+    "model": "N9",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID15",
+    "name": "SIM 15 P1S",
+    "model": "C12",
+    "units": [],
+    "external": 0
+  },
+  {
+    "serial": "XTSIMP4GRID16",
+    "name": "SIM16 H2C",
+    "model": "O1C2",
+    "units": [],
+    "external": 0
+  }
+]

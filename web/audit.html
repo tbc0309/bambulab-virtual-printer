@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BambuLab Virtual Printer · 机型 / AMS 能力</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="audit.js"></script>
+  </head>
+  <body>
+    <header>
+      <strong>BambuLab <span>Virtual Printer</span></strong
+      ><a href="/">返回管理页</a>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">CAPABILITY CATALOG</div>
+          <h1>机型能力与模拟范围</h1>
+          <p>
+            按 BambuStudio 型号配置和 ha-bambulab
+            交叉核对。新型号以协议验证为主，不能替代硬件验证。
+          </p>
+        </div>
+      </section>
+      <p id="source" class="status-box tone-info"></p>
+      <section id="models" class="combinations"></section>
+      <section class="panel">
+        <h2>AMS 能力</h2>
+        <div id="amsMatrix" class="combinations"></div>
+      </section>
+      <footer>
+        部分机型或特性依赖固件版本、选配件及运行时遥测。展开型号可查看完整上游能力字段；模拟器仅模拟控制屏使用的
+        MQTT 子集。
+      </footer>
+    </main>
+  </body>
+</html>
